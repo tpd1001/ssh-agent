@@ -32,6 +32,11 @@ nc='\033[0m'
 # export the following environment variable
 docker=${docker:-docker}
 
+# force amd64 to be accepted to suppress warnings
+# https://stackoverflow.com/questions/69054921/docker-on-mac-m1-gives-the-requested-images-platform-linux-amd64-does-not-m
+# setting it to arm64 may fail if there is no ARM image
+DOCKER_DEFAULT_PLATFORM=linux/amd64
+
 # To override the default and use the docker hub image,
 # uncomment or export the following environment variable
 # N.B. you will need to have previously done a docker pull of the image
@@ -82,6 +87,6 @@ echo -e "${bold}Launching ssh-agent container...${nc}"
 $docker run -d --name=ssh-agent ${image}
 
 echo -e "Adding your ssh keys to the ssh-agent container..."
-$docker run --rm --volumes-from=ssh-agent -v ~/.ssh:/.ssh:ro -it ${image} ssh-add /root/.ssh/${1:-id_rsa}
+$docker run --rm --volumes-from=ssh-agent -v $HOME/.ssh:/.ssh:ro -it ${image} ssh-add /root/.ssh/${1:-id_rsa}
 
 echo -e "${green}ssh-agent is now ready to use.${nc}"
