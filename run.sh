@@ -37,6 +37,11 @@ docker=${docker:-docker}
 # setting it to arm64 may fail if there is no ARM image
 DOCKER_DEFAULT_PLATFORM=linux/amd64
 
+# To override the default and use your own container name,
+# uncomment or export the following environment variable
+# N.B. you will need to have previously done a docker pull of the image
+name=${name:-ssh-agent}
+
 # To override the default and use the docker hub image,
 # uncomment or export the following environment variable
 # N.B. you will need to have previously done a docker pull of the image
@@ -46,13 +51,13 @@ DOCKER_DEFAULT_PLATFORM=linux/amd64
 image=$($docker images|grep ${image:-docker-ssh-agent}|awk '{print $1}')
 
 # Find agent container id
-id=$($docker ps -a|grep ssh-agent|awk '{print $1}')
+id=$($docker ps -a|grep $name|awk '{print $1}')
 
 # Stop command
 if [ "$1" == "-s" ] && [ $id ]; then
   echo -e "Removing ssh-keys..."
-  $docker run --rm --volumes-from=ssh-agent -it ${image} ssh-add -D
-  echo -e "Stopping ssh-agent container..."
+  $docker run --rm --volumes-from=$name -it ${image} ssh-add -D
+  echo -e "Stopping $name container..."
   $docker rm -f $id
   exit
 fi
@@ -67,14 +72,14 @@ fi
 
 # If container is already present, exit.
 if [ $id ]; then
-  echo -e "A container named 'ssh-agent' is already present."
+  echo -e "A container named '$name' is already present."
   echo -e "Do you wish to stop and remove it? (y/N): "
   read input
 
   if [ "$input" == "y" ]; then
     echo -e "Removing SSH keys..."
-    $docker run --rm --volumes-from=ssh-agent -it ${image} ssh-add -D
-    echo -e "Stopping ssh-agent container..."
+    $docker run --rm --volumes-from=$name -it ${image} ssh-add -D
+    echo -e "Stopping $name container..."
     $docker rm -f $id
     echo -e "${red}Stopped.${nc}"
   fi
@@ -83,10 +88,10 @@ if [ $id ]; then
 fi
 
 # Run ssh-agent
-echo -e "${bold}Launching ssh-agent container...${nc}"
-$docker run -d --name=ssh-agent ${image}
+echo -e "${bold}Launching $name container...${nc}"
+$docker run -d --name=$name ${image}
 
-echo -e "Adding your ssh keys to the ssh-agent container..."
-$docker run --rm --volumes-from=ssh-agent -v $HOME/.ssh:/.ssh:ro -it ${image} ssh-add /root/.ssh/${1:-id_rsa}
+echo -e "Adding your ssh keys to the $name container..."
+$docker run --rm --volumes-from=$name -v $HOME/.ssh:/.ssh:ro -it ${image} ssh-add /root/.ssh/${1:-id_rsa}
 
-echo -e "${green}ssh-agent is now ready to use.${nc}"
+echo -e "${green}$name is now ready to use.${nc}"
