@@ -45,7 +45,7 @@ name=${name:-ssh-agent}
 # To override the default and use the docker hub image,
 # uncomment or export the following environment variable
 # N.B. you will need to have previously done a docker pull of the image
-# image=nardeas/ssh-agent
+image=nardeas/ssh-agent
 
 # Find image id
 image=$($docker images|grep ${image:-docker-ssh-agent}|awk '{print $1}')
